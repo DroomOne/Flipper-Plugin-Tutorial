@@ -3,7 +3,7 @@ Tutorial on how to build a basic "Hello world" plugin for Flipper Zero.
 
 This tutorial includes: 
 
-- Sourcecode template for a custom flipper app!
+- Sourcecode template for a custom flipper plugin!
 - A step by step story on how to create the base of a custom flipper plugin. (There are many other ways of creating apps for flipper, this example is based on the existing snake app)
 
 The tutorial has been writter during development of [flappybird for flipper](https://github.com/DroomOne/flipperzero-firmware/tree/dev/applications/flappy_bird). 
