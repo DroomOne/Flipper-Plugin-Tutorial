@@ -86,7 +86,7 @@ int32_t hello_world_app(void* p) {
                             plugin_state->x++;
                         break; 
                     case InputKeyLeft:  
-                            plugin_state->y--;
+                            plugin_state->x--;
                         break; 
                     case InputKeyOk: 
                     case InputKeyBack: 

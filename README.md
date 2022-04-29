@@ -222,7 +222,7 @@ for(bool processing = true; processing;) {
                         plugin_state->x++;
                     break; 
                 case InputKeyLeft:  
-                        plugin_state->y--;
+                        plugin_state->x--;
                     break; 
                 case InputKeyOk: 
                 case InputKeyBack: 
