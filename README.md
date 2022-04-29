@@ -215,10 +215,10 @@ for(bool processing = true; processing;) {
             if(event.input.type == InputTypePress) {  
                 switch(event.input.key) {
                 case InputKeyUp: 
-                        plugin_state->y++;
+                        plugin_state->y--;
                     break; 
                 case InputKeyDown: 
-                        plugin_state->y--;
+                        plugin_state->y++;
                     break; 
                 case InputKeyRight: 
                         plugin_state->x++;
