@@ -13,16 +13,16 @@ In this tutorial a simple hello world plugin is added. That renders text in flip
 
 ## Downloading the firmware
 1. Clone or download [flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware). 
-```bash 
+```sh 
 git clone https://github.com/flipperdevices/flipperzero-firmware
 ```
 2. Create a folder for the custom plugin in `flipperzero-firmware/applications/`. For the hello-world app, this will be: `hello_world`. 
-```bash
+```sh
 mkdir flipperzero-firmware/applications/hello_world
 ```
 3. Create a new source file in the newly created folder. The file name has to match the name of the folder. 
 
-```bash
+```sh
 touch flipperzero-firmware/applications/hello_world/hello_world.c
 ```
 
@@ -31,7 +31,6 @@ touch flipperzero-firmware/applications/hello_world/hello_world.c
 For flipper to activate the plugin, a main function for the plugin has to be added. Following the naming convention of existing flipper plugins, this needs to be: `hello_world_app`. 
 
 - Create an `int32_t hello_world_app(void* p)` function that will function as the entry of the plguin. 
-
 
 For the plugin to keep track of what actions have been executed, we create a messagequeue. 
 - A by calling `osMessageQueueNew` we create a new `osMessageQueueId_t` that keeps track of events. 
@@ -69,6 +68,16 @@ Signals the plugin once a button is pressed. The event is queued in the event_qu
 A refrence to the queue is passed during the setup of the application.
 
 ```c
+typedef struct {
+    EventType type;
+    InputEvent input;
+} PluginEvent;
+
+typedef enum {
+    EventTypeTick,
+    EventTypeKey,
+} EventType;
+
 static void input_callback(InputEvent* input_event, osMessageQueueId_t event_queue) {
     furi_assert(event_queue); 
 
@@ -86,22 +95,106 @@ static void render_callback(Canvas* const canvas, void* ctx) {
 }
 ```
 
+## Main Loop and plugin State
+The main loop runs during the lifetime of the plugin. For each loop we try to pop an event from the queue, and handle the queue item such as button input / plugin events. 
+
+For this example we render a new frame, every time the loop is run. This can be done by calling `view_port_update(view_port);`
+
+```c
+    PluginEvent event; 
+    for(bool processing = true; processing;) { 
+        osStatus_t event_status = osMessageQueueGet(event_queue, &event, NULL, 100);
+
+        if(event_status == osOK) {
+            // press events
+            if(event.type == EventTypeKey) {
+                if(event.input.type == InputTypePress) {  
+                    switch(event.input.key) {
+                    case InputKeyUp:   
+                    case InputKeyDown:   
+                    case InputKeyRight:   
+                    case InputKeyLeft:   
+                    case InputKeyOk: 
+                    case InputKeyBack: 
+                        // Exit the plugin
+                        processing = false;
+                        break;
+                    }
+                }
+            } 
+        } else {
+            FURI_LOG_D(TAG, "osMessageQueue: event timeout");
+            // event timeout
+        }
+
+        view_port_update(view_port); 
+    }
+```
+
+### Plugin State
+Because of the callback system, the plugin is being manipulated by different threads. To overcome race conditions we have to create a shared object that is safe to use. 
+
+1. Allocate a new PluginState struct, and initialise it before the main loop.
+```c
+typedef struct { 
+} PluginState; 
+
+// in main:
+PluginState* plugin_state = malloc(sizeof(PluginState));
+```
+2. Using `ValueMutex` we create a mutex for the plugin state called `state_mutex`. 
+3. Initalise the mutex for `PluginState` using `init_mutex()`
+4. Pass the mutex as argument to `view_port_draw_callback_set()` so we can safely access the shared state from flippers thread. 
+
+```c
+typedef struct { 
+} PluginState; 
+
+int32_t hello_world_app(void* p) { 
+    osMessageQueueId_t event_queue = osMessageQueueNew(8, sizeof(PluginEvent), NULL); 
+    
+    PluginState* plugin_state = malloc(sizeof(PluginState));
+    ValueMutex state_mutex; 
+    if (!init_mutex(&state_mutex, plugin_state, sizeof(PluginState))) {
+        FURI_LOG_E(TAG, "cannot create mutex\r\n");
+        free(game_state); 
+        return 255;
+    }
+
+    // Set system callbacks
+    ViewPort* view_port = view_port_alloc(); 
+    view_port_draw_callback_set(view_port, render_callback, &state_mutex);
+    view_port_input_callback_set(view_port, input_callback, event_queue);
+...
+```
 
 
-In order to do something with this signal, we need to store this even 
+### Main Loop 
 
+Let's deal with the mutex in our main loop. So we can update values from the main loop based on user input. As an example, we will move a hello-world text through the screen. Based on user input. 
 
+1. For this we add a `int x` and `int y` to your state. 
+```c
+typedef struct { 
+    int x; 
+    int y;
+} PluginState; 
+```
 
-
-
-
-### Render 
-
-
-
-
-In order to make the hello world application appair in 
-
+2. Initialise the values of the struct using a new `hello_world_state_init()` function. 
+```c
+static void hello_world_state_init(PluginState* const plugin_state) {
+    plugin_state->x = 10; 
+    plugin_state->y = 10
+} 
+```
+3. Call it after allocating the object in the main function. 
+```c
+PluginState* plugin_state = malloc(sizeof(PluginState));
+hello_world_state_init(plugin_state);
+ValueMutex state_mutex; 
+...
+```
 
 ## "Main" 
 
