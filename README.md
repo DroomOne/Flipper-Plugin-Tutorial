@@ -290,7 +290,7 @@ Next make sure we add it to the list of applications that is included in the men
     {.app = hello_world_app, 
     .name = "Hello World!", 
     .stack_size = 1024, 
-    .icon = &A_Plugins_14
+    .icon = &A_Plugins_14,
     .flags = FlipperApplicationFlagDefault},
 #endif
 ```
@@ -305,5 +305,11 @@ SRV_GUI		= 1
 endif
 ```
 
+On the top of the document, lets set `APP_HELLO_WORLD` to 1!
+```mk
+APP_SNAKE_GAME = 1
+APP_HELLO_WORLD = 1
+...
+```
 
 Now you can build the application! 
