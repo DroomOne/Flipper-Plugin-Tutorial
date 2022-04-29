@@ -72,15 +72,15 @@ Signals the plugin once a button is pressed. The event is queued in the event_qu
 A refrence to the queue is passed during the setup of the application.
 
 ```c
-typedef struct {
-    EventType type;
-    InputEvent input;
-} PluginEvent;
-
 typedef enum {
     EventTypeTick,
     EventTypeKey,
 } EventType;
+
+typedef struct {
+    EventType type;
+    InputEvent input;
+} PluginEvent;
 
 static void input_callback(InputEvent* input_event, osMessageQueueId_t event_queue) {
     furi_assert(event_queue); 
@@ -160,7 +160,7 @@ int32_t hello_world_app(void* p) {
     PluginState* plugin_state = malloc(sizeof(PluginState));
     ValueMutex state_mutex; 
     if (!init_mutex(&state_mutex, plugin_state, sizeof(PluginState))) {
-        FURI_LOG_E(TAG, "cannot create mutex\r\n");
+        FURI_LOG_E("Hello_World", "cannot create mutex\r\n");
         free(game_state); 
         return 255;
     }
@@ -189,7 +189,7 @@ typedef struct {
 ```c
 static void hello_world_state_init(PluginState* const plugin_state) {
     plugin_state->x = 10; 
-    plugin_state->y = 10
+    plugin_state->y = 10;
 } 
 ```
 Call it after allocating the object in the main function. 

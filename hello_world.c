@@ -3,22 +3,21 @@
 #include <input/input.h>
 #include <stdlib.h>
 
-typedef struct {
-    EventType type;
-    InputEvent input;
-} PluginEvent;
-
 typedef enum {
     EventTypeTick,
     EventTypeKey,
 } EventType;
 
 typedef struct {
+    EventType type;
+    InputEvent input;
+} PluginEvent;
+
+typedef struct {
     int x;
     int y;
 } PluginState; 
 
- 
 static void render_callback(Canvas* const canvas, void* ctx) {
     const PluginState* plugin_state = acquire_mutex((ValueMutex*)ctx, 25);
     if(plugin_state == NULL) {
@@ -28,7 +27,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     canvas_draw_frame(canvas, 0, 0, 128, 64);
     
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, plugin_state.x, plugin_state.y, AlignRight, AlignBottom, "Hello World");
+    canvas_draw_str_aligned(canvas, plugin_state->x, plugin_state->y, AlignRight, AlignBottom, "Hello World");
 
     release_mutex((ValueMutex*)ctx, plugin_state);
 }
@@ -40,11 +39,9 @@ static void input_callback(InputEvent* input_event, osMessageQueueId_t event_que
     osMessageQueuePut(event_queue, &event, 0, osWaitForever);
 }
 
- 
-
 static void hello_world_state_init(PluginState* const plugin_state) {
     plugin_state->x = 10; 
-    plugin_state->y = 10
+    plugin_state->y = 10;
 } 
 
 int32_t hello_world_app(void* p) { 
@@ -54,8 +51,8 @@ int32_t hello_world_app(void* p) {
     hello_world_state_init(plugin_state);
     ValueMutex state_mutex; 
     if (!init_mutex(&state_mutex, plugin_state, sizeof(PluginState))) {
-        FURI_LOG_E(TAG, "cannot create mutex\r\n");
-        free(game_state); 
+        FURI_LOG_E("Hello_world", "cannot create mutex\r\n");
+        free(plugin_state); 
         return 255;
     }
 
@@ -99,7 +96,7 @@ int32_t hello_world_app(void* p) {
                 }
             } 
         } else {
-            FURI_LOG_D(TAG, "osMessageQueue: event timeout");
+            FURI_LOG_D("Hello_world", "osMessageQueue: event timeout");
             // event timeout
         }
 
