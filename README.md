@@ -8,7 +8,7 @@ This tutorial includes:
 
 The tutorial has been writter during development of [flappybird for flipper](https://github.com/DroomOne/flipperzero-firmware/tree/dev/applications/flappy_bird). 
 
-![Screenshot](/img/screen.bmp)
+![Screenshot](/img/qFlipper_zp57pxf0Dv.gif)
 
 # Hello World - The story
 __This is the step-by-step story version of the tutorial. You can skip this and directly continue to the sourcecode if you know what your doing. Make sure you don't forget to add the application to the makefile, and register its functions in `applications.c` (see chapter: Building the firmware + plugin)__
@@ -190,8 +190,8 @@ typedef struct {
 2. Initialise the values of the struct using a new `hello_world_state_init()` function. 
 ```c
 static void hello_world_state_init(PluginState* const plugin_state) {
-    plugin_state->x = 10; 
-    plugin_state->y = 10;
+    plugin_state->x = 50; 
+    plugin_state->y = 30;
 } 
 ```
 Call it after allocating the object in the main function. 

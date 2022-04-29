@@ -40,8 +40,8 @@ static void input_callback(InputEvent* input_event, osMessageQueueId_t event_que
 }
 
 static void hello_world_state_init(PluginState* const plugin_state) {
-    plugin_state->x = 10; 
-    plugin_state->y = 10;
+    plugin_state->x = 50; 
+    plugin_state->y = 30;
 } 
 
 int32_t hello_world_app(void* p) { 
