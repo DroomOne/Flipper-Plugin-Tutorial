@@ -3,13 +3,17 @@ Tutorial on how to build a basic "Hello world" plugin for Flipper Zero.
 
 This tutorial includes: 
 
+- Sourcecode template for a custom flipper app!
 - A step by step story on how to create the base of a custom flipper plugin. (There are many other ways of creating apps for flipper, this example is based on the existing snake app)
-- Sourcecode for a custom flipper app!
 
 The tutorial has been writter during development of flappybird for flipper. 
 
-# Hello World
-In this tutorial a simple hello world plugin is added. That renders text in flippers canvas, and deals with user input (like closing the application). 
+# Hello World - The story
+__This is the step-by-step story version of the tutorial. You can skip this and directly continue to the sourcecode if you know what your doing. Make sure you don't forget to add the application to the makefile, and register its functions in `applications.c` (see chapter: Building the firmware + plugin)__
+
+
+
+In this tutorial a simple hello world plugin is added to flipper. The goal is to render something in the screen, and make the buttons move that object. In this case it will be the classic "Hello World" text. 
 
 ## Downloading the firmware
 1. Clone or download [flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware). 
@@ -98,7 +102,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
 ## Main Loop and plugin State
 The main loop runs during the lifetime of the plugin. For each loop we try to pop an event from the queue, and handle the queue item such as button input / plugin events. 
 
-For this example we render a new frame, every time the loop is run. This can be done by calling `view_port_update(view_port);`
+For this example we render a new frame, every time the loop is run. This can be done by calling `view_port_update(view_port);`. 
 
 ```c
     PluginEvent event; 
@@ -188,66 +192,118 @@ static void hello_world_state_init(PluginState* const plugin_state) {
     plugin_state->y = 10
 } 
 ```
-3. Call it after allocating the object in the main function. 
+Call it after allocating the object in the main function. 
 ```c
 PluginState* plugin_state = malloc(sizeof(PluginState));
 hello_world_state_init(plugin_state);
 ValueMutex state_mutex; 
 ...
 ```
-
-## "Main" 
-
-The first called function of the application needs to be defined in `applications\applications.c`
-
-
-
-The application can be called on any function n
-
-
-Create a new folder `.c` file 
-
-- code
-    - add .c file 
-    - main() 
-    - draw_callback
-    - input_callback
-    - main loop
-    
-- makefile 
-
-
-
-## Register the plugin 
-We have to tell flipper's build system that a new plugin is added. We can do this by adding references to 
-
-The application needs to be registered in the menu to be called. This is possible by adding an entry to `applications\applications.c`. 
+4. Aquire a blocking mutex after a new event is handled in the queue. Write values to the locked game_state object when user presses buttons. And release when we finish working with the state. 
 
 ```c
-#ifdef APP_FLAPPY_GAME
-    {.app = flappy_game_app, .name = "Flipper Flappy Bird", .stack_size = 1024, .icon = &A_Plugins_14},
+PluginEvent event; 
+for(bool processing = true; processing;) { 
+    osStatus_t event_status = osMessageQueueGet(event_queue, &event, NULL, 100);
+    PluginState* plugin_state = (PluginState*)acquire_mutex_block(&state_mutex);
+
+    if(event_status == osOK) {
+        // press events
+        if(event.type == EventTypeKey) {
+            if(event.input.type == InputTypePress) {  
+                switch(event.input.key) {
+                case InputKeyUp: 
+                        plugin_state->y++;
+                    break; 
+                case InputKeyDown: 
+                        plugin_state->y--;
+                    break; 
+                case InputKeyRight: 
+                        plugin_state->x++;
+                    break; 
+                case InputKeyLeft:  
+                        plugin_state->y--;
+                    break; 
+                case InputKeyOk: 
+                case InputKeyBack: 
+                    processing = false;
+                    break;
+                }
+            }
+        } 
+    } else {
+        FURI_LOG_D(TAG, "osMessageQueue: event timeout");
+        // event timeout
+    }
+
+    view_port_update(view_port);
+    release_mutex(&state_mutex, plugin_state);
+}
+...
+```
+
+## Drawing Graphics 
+
+Creating graphics on flipper has been made easy by flippers developers. An canvas around the outer edges of the screen could be easly added with a single line: `canvas_draw_frame(canvas, 0, 0, 128, 64);`. 
+
+However, when it comes to dealing with user input, moving objects, changing processes we have to take into account that objects might be used by other threads. In the previous part we added a mutex in order to block any other thread writing to an object. For safe drawing graphics, we have to do the same.
+
+1. Aquire a mutex by calling `acquire_mutex()`. The `render_callback()` has the context in a argument. Previously we told the set_callback function to use `plugin_state` for this. 
+2. Check if the mutex is valid, otherwise skip this render
+3. Do all the drawing that we like.. In this case a simple text Hello world, on the `x` and `y` positions we have set in the plugin_state. 
+4. Close the mutex again. 
+
+```c
+static void render_callback(Canvas* const canvas, void* ctx) {
+    const PluginState* plugin_state = acquire_mutex((ValueMutex*)ctx, 25);
+    if(plugin_state == NULL) {
+        return;
+    }
+    // border around the edge of the screen
+    canvas_draw_frame(canvas, 0, 0, 128, 64);
+    
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str_aligned(canvas, plugin_state.x, plugin_state.y, AlignRight, AlignBottom, "Hello World");
+
+    release_mutex((ValueMutex*)ctx, plugin_state);
+}
+``` 
+
+
+## Building the firmware + plugin
+
+Before the plugin is added to flipper. We have to let the compiler know, where to find the plugins files. 
+
+1. The application needs to be registered in the menu to be called. This is possible by adding two entries to `applications\applications.c`. 
+
+First entry is the refrence to the plugin's main function. Lets add it below the snake_game_app: 
+```c
+// Plugins
+extern int32_t music_player_app(void* p);
+extern int32_t snake_game_app(void* p);
+extern int32_t hello_world(void* p);
+``` 
+Next make sure we add it to the list of applications that is included in the menu:
+
+```c
+#ifdef APP_HELLO_WORLD
+    {.app = hello_world_app, 
+    .name = "Hello World!", 
+    .stack_size = 1024, 
+    .icon = &A_Plugins_14
+    .flags = FlipperApplicationFlagDefault},
 #endif
+```
+2. Let the compiler know we want to build these objects by adding it to `applications.mk` file. 
+
+Again lets add the entry below the Snake Game. 
+```mk
+APP_HELLO_WORLD ?= 0
+ifeq ($(APP_HELLO_WORLD), 1)
+CFLAGS		+= -DAPP_HELLO_WORLD
+SRV_GUI		= 1
+endif
 ```
 
 
-
-# Building the example
-
-1. Clone or download [flipperzero-firmware](https://github.com/flipperdevices/flipperzero-firmware)
-2. Copy the folder `hello_world/` into `flipperzero-firmware/applications/`
-3. Add the application to flippers menu by:
-    1. defining the function as a `extern int32_t`. 
-        ```c
-        // Plugins
-        extern int32_t music_player_app(void* p);
-        extern int32_t snake_game_app(void* p);
-        extern int32_t hello_world(void* p);
-        ``` 
-    2. 
-
-
-
-# How it works
-
-## Application Folder
-Create a folder with the application name `hello_world` in `applications`. In `applications\hello_world` add a new file `hello_world.c`. 
+Now you can build the application! 
