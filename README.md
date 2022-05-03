@@ -6,7 +6,7 @@ This tutorial includes:
 - Sourcecode template for a custom flipper plugin!
 - A step by step story on how to create the base of a custom flipper plugin. (There are many other ways of creating apps for flipper, this example is based on the existing snake app)
 
-The tutorial has been writter during development of [flappybird for flipper](https://github.com/DroomOne/flipperzero-firmware/tree/dev/applications/flappy_bird). 
+The tutorial was written during development of [flappybird for flipper](https://github.com/DroomOne/flipperzero-firmware/tree/dev/applications/flappy_bird). 
 
 ![Screenshot](/img/qFlipper_zp57pxf0Dv.gif)
 
