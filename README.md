@@ -283,7 +283,7 @@ First entry is the refrence to the plugin's main function. Lets add it below the
 // Plugins
 extern int32_t music_player_app(void* p);
 extern int32_t snake_game_app(void* p);
-extern int32_t hello_world(void* p);
+extern int32_t hello_world_app(void* p);
 ``` 
 Next make sure we add it to the list of applications that is included in the menu:
 
