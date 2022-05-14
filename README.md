@@ -50,7 +50,7 @@ The view_port is used to control the canvas (display) and userinput from the har
 
 ```c
 int32_t hello_world_app(void* p) { 
-    osMessageQueueId_t event_queue = osMessageQueueNew(8, sizeof(GameEvent), NULL); 
+    osMessageQueueId_t event_queue = osMessageQueueNew(8, sizeof(PluginEvent), NULL); 
  
     // Set system callbacks
     ViewPort* view_port = view_port_alloc(); 
