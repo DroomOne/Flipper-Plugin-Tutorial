@@ -163,7 +163,7 @@ int32_t hello_world_app(void* p) {
     ValueMutex state_mutex; 
     if (!init_mutex(&state_mutex, plugin_state, sizeof(PluginState))) {
         FURI_LOG_E("Hello_World", "cannot create mutex\r\n");
-        free(game_state); 
+        free(plugin_state); 
         return 255;
     }
 
@@ -201,7 +201,7 @@ hello_world_state_init(plugin_state);
 ValueMutex state_mutex; 
 ...
 ```
-4. Aquire a blocking mutex after a new event is handled in the queue. Write values to the locked game_state object when user presses buttons. And release when we finish working with the state. 
+4. Aquire a blocking mutex after a new event is handled in the queue. Write values to the locked plugin_state object when user presses buttons. And release when we finish working with the state. 
 
 ```c
 PluginEvent event; 
