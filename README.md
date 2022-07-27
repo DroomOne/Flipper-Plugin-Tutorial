@@ -49,8 +49,8 @@ The view_port is used to control the canvas (display) and userinput from the har
 - Register the `view_port` to the `GUI`
 
 ```c
-int32_t hello_world_app(void* p) { 
-    osMessageQueueId_t event_queue = osMessageQueueNew(8, sizeof(GameEvent), NULL); 
+int32_t hello_world_app() { 
+    FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(PluginEvent)); 
  
     // Set system callbacks
     ViewPort* view_port = view_port_alloc(); 
@@ -84,11 +84,11 @@ typedef struct {
     InputEvent input;
 } PluginEvent;
 
-static void input_callback(InputEvent* input_event, osMessageQueueId_t event_queue) {
+static void input_callback(InputEvent* input_event, FuriMessageQueue* event_queue) {
     furi_assert(event_queue); 
 
     PluginEvent event = {.type = EventTypeKey, .input = *input_event};
-    osMessageQueuePut(event_queue, &event, 0, osWaitForever);
+    furi_message_queue_put(event_queue, &event, FuriWaitForever);
 }
 ``` 
 
@@ -109,9 +109,9 @@ For this example we render a new frame, every time the loop is run. This can be 
 ```c
     PluginEvent event; 
     for(bool processing = true; processing;) { 
-        osStatus_t event_status = osMessageQueueGet(event_queue, &event, NULL, 100);
+        FuriStatus event_status = furi_message_queue_put(event_queue, &event, 100);
 
-        if(event_status == osOK) {
+        if(event_status == FuriStatusOK) {
             // press events
             if(event.type == EventTypeKey) {
                 if(event.input.type == InputTypePress) {  
@@ -129,7 +129,7 @@ For this example we render a new frame, every time the loop is run. This can be 
                 }
             } 
         } else {
-            FURI_LOG_D(TAG, "osMessageQueue: event timeout");
+            FURI_LOG_D(TAG, "FuriMessageQueue: event timeout");
             // event timeout
         }
 
@@ -156,8 +156,8 @@ PluginState* plugin_state = malloc(sizeof(PluginState));
 typedef struct { 
 } PluginState; 
 
-int32_t hello_world_app(void* p) { 
-    osMessageQueueId_t event_queue = osMessageQueueNew(8, sizeof(PluginEvent), NULL); 
+int32_t hello_world_app() { 
+    FuriMessageQueue* event_queue = furi_message_queue_alloc(8, sizeof(PluginEvent)); 
     
     PluginState* plugin_state = malloc(sizeof(PluginState));
     ValueMutex state_mutex; 
@@ -206,10 +206,10 @@ ValueMutex state_mutex;
 ```c
 PluginEvent event; 
 for(bool processing = true; processing;) { 
-    osStatus_t event_status = osMessageQueueGet(event_queue, &event, NULL, 100);
+    FuriStatus event_status = furi_message_queue_put(event_queue, &event, 100);
     PluginState* plugin_state = (PluginState*)acquire_mutex_block(&state_mutex);
 
-    if(event_status == osOK) {
+    if(event_status == FuriStatusOK) {
         // press events
         if(event.type == EventTypeKey) {
             if(event.input.type == InputTypePress) {  
@@ -234,7 +234,7 @@ for(bool processing = true; processing;) {
             }
         } 
     } else {
-        FURI_LOG_D(TAG, "osMessageQueue: event timeout");
+        FURI_LOG_D(TAG, "FuriMessageQueue: event timeout");
         // event timeout
     }
 
@@ -276,42 +276,38 @@ static void render_callback(Canvas* const canvas, void* ctx) {
 
 Before the plugin is added to flipper. We have to let the compiler know, where to find the plugins files. 
 
-1. The application needs to be registered in the menu to be called. This is possible by adding two entries to `applications\applications.c`. 
-
-First entry is the refrence to the plugin's main function. Lets add it below the snake_game_app: 
-```c
-// Plugins
-extern int32_t music_player_app(void* p);
-extern int32_t snake_game_app(void* p);
-extern int32_t hello_world_app(void* p);
-``` 
-Next make sure we add it to the list of applications that is included in the menu:
+1. The applications needs a manifest file to let the firmware know how to use it. Therefore create a file `applications\hello_world\application.fam`
 
 ```c
-#ifdef APP_HELLO_WORLD
-    {.app = hello_world_app, 
-    .name = "Hello World!", 
-    .stack_size = 1024, 
-    .icon = &A_Plugins_14,
-    .flags = FlipperApplicationFlagDefault},
-#endif
+App(
+    appid="hello_world",
+    name="Hello World",
+    apptype=FlipperAppType.PLUGIN,
+    entry_point="hello_world_app",
+    cdefines=["APP_HELLO_WORLD"],
+    requires=[
+        "gui",
+    ],
+    stack_size=2 * 1024,
+    order=20,
+)
 ```
-2. Let the compiler know we want to build these objects by adding it to `applications.mk` file. 
+2. The application needs to be registered in the menu to be called. This is possible by adding an entry to `applications\meta\application.fam` 
 
-Again lets add the entry below the Snake Game. 
-```mk
-APP_HELLO_WORLD ?= 0
-ifeq ($(APP_HELLO_WORLD), 1)
-CFLAGS		+= -DAPP_HELLO_WORLD
-SRV_GUI		= 1
-endif
-```
+Add the application id to the list of provides for the specific menu. In this case under basic_plugins:
 
-On the top of the document, lets set `APP_HELLO_WORLD` to 1!
-```mk
-APP_SNAKE_GAME = 1
-APP_HELLO_WORLD = 1
-...
+```c
+App(
+    appid="basic_plugins",
+    name="Basic applications for plug-in menu",
+    apptype=FlipperAppType.METAPACKAGE,
+    provides=[
+        "music_player",
+        "bt_hid",
+        "picopass",
+        "hello_world",
+    ],
+)
 ```
 
 Now you can build the application! 
