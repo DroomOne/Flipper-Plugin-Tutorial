@@ -1,0 +1,32 @@
+name: Build FAP workflow
+
+inputs:
+  source-path:
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+  - name: Cache uFBT
+    uses: actions/cache@v3
+    id: cache-ufbt
+    with:
+      path: ~/ufbt
+      key: ${{ runner.OS }}-ufbt-cache}}
+      restore-keys: |
+        ${{ runner.OS }}-ufbt-cache
+
+  - name: Install uFBT
+    if: steps.cache-ufbt.outputs.cache-hit != 'true'
+    shell: bash
+    run: |
+      sudo apt install git 
+      git clone https://github.com/flipperdevices/flipperzero-ufbt ~/ufbt
+      ~/ufbt/ufbt update
+  
+  - name: Build FAP
+    shell: bash
+    run: |
+      cd ${{ inputs.source-path }}
+      ~/ufbt/ufbt

@@ -95,6 +95,8 @@ int32_t hello_world_app() {
                     case InputKeyBack:
                         processing = false;
                         break;
+                    default:
+                        break;
                     }
                 }
             }
