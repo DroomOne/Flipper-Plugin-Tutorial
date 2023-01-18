@@ -28,7 +28,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
 
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str_aligned(
-        canvas, plugin_state->x, plugin_state->y, AlignRight, AlignBottom, "Hello World");
+        canvas, plugin_state->x, plugin_state->y, AlignRight, AlignBottom, "Hello World!");
 
     release_mutex((ValueMutex*)ctx, plugin_state);
 }
