@@ -1,0 +1,22 @@
+on: [push]
+jobs:
+  release:
+    name: Release
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build FAP
+      uses: ./.github/actions/build-fap
+      with:
+        source-path: .
+    
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Development Build"
+        files: |
+          ./dist/*.fap

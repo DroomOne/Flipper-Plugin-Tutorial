@@ -1,0 +1,17 @@
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build FAP
+      uses: ./.github/actions/build-fap
+      with:
+        source-path: .
+    
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ github.event.repository.name }}.fap
+        path: dist/*.fap
