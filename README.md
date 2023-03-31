@@ -36,7 +36,7 @@ touch flipperzero-firmware/applications/hello_world/hello_world.c
 ## Plugin Main 
 For flipper to activate the plugin, a main function for the plugin has to be added. Following the naming convention of existing flipper plugins, this needs to be: `hello_world_app`. 
 
-- Create an `int32_t hello_world_app(void* p)` function that will function as the entry of the plguin. 
+- Create an `int32_t hello_world_app(void* p)` function that will function as the entry of the plugin. 
 
 For the plugin to keep track of what actions have been executed, we create a messagequeue. 
 - A by calling `osMessageQueueNew` we create a new `osMessageQueueId_t` that keeps track of events. 
