@@ -71,7 +71,7 @@ Flipper will let the plugin know once it is ready to deal with a new frame or on
 **input_callback:**
 Signals the plugin once a button is pressed. The event is queued in the event_queue. In the main thread the queue read and handled. 
 
-A refrence to the queue is passed during the setup of the application.
+A reference to the queue is passed during the setup of the application.
 
 ```c
 typedef enum {
